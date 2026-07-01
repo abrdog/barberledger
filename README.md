@@ -1,1 +1,2 @@
-# barberledger
+22.71%
+40%

@@ -4,7 +4,8 @@ let myChart = null;
 const THEME = {
   crimson: '#c00040',   // иконка — cashbox, commission, in pocket
   net: '#d0d0d0',       // net — светлый нейтральный
-  muted: '#555'
+  muted: '#555',
+  blue: '#3b82f6'
 };
 
 // ─── НАВИГАЦИЯ ───────────────────────────────────────────
@@ -125,7 +126,7 @@ async function renderChart() {
         {
           label: 'Tips',
           data: rev.map(d => d.bonus),
-          borderColor: THEME.crimson,
+          borderColor: THEME.blue,
           borderWidth: 2,
           pointRadius: 0,
           tension: 0.4
@@ -144,5 +145,35 @@ async function renderChart() {
   });
 }
 
+// ─── БУДИЛЬНИК ДЛЯ SUPABASE (+1 В ДРУГУЮ ТАБЛИЦУ) ─────────
+async function sendPingVisit() {
+  try {
+    // 1. Получаем текущее число из таблицы site_pings
+    const { data, error: selectError } = await window.supabaseClient
+      .from('site_pings')
+      .select('counter')
+      .eq('id', 1)
+      .single();
+
+    if (selectError) throw selectError;
+
+    const newCount = (data?.counter || 0) + 1;
+
+    // 2. Инкрементируем строчку с id=1
+    await window.supabaseClient
+      .from('site_pings')
+      .update({ counter: newCount })
+      .eq('id', 1);
+
+    console.log(`[Keep-Alive] Проект активен. Заходов в систему: ${newCount}`);
+  } catch (err) {
+    // Тихо пишем в консоль, чтобы не алертить пользователю в интерфейс
+    console.warn('Keep-Alive ping failed:', err.message);
+  }
+}
+
 // ─── СТАРТ ───────────────────────────────────────────────
-window.onload = loadHistory;
+window.onload = function () {
+  loadHistory();     // Загружаем историю для интерфейса
+  sendPingVisit();   // Будим базу данных в фоне
+};
