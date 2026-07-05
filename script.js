@@ -75,10 +75,15 @@ async function loadHistory() {
     const com = (item.com || 0).toFixed(2);
 
     return `
-      <div class="history-item">
+      <div class="history-item" id="item-${item.id}">
         <div class="h-header">
           <div class="h-net-main" style="color:${THEME.net}">${item.net.toFixed(2)} $</div>
-          <div class="h-date">${date}</div>
+          <!-- Клик по этой плашке включает/подтверждает удаление -->
+          <div class="h-date"
+               id="date-${item.id}"
+               data-original="${date}"
+               data-confirming="false"
+               onclick="toggleDeleteMode(event, ${item.id})">${date}</div>
         </div>
         <div class="h-grid">
           <div>
@@ -95,6 +100,58 @@ async function loadHistory() {
       </div>`;
   }).join('');
 }
+
+// ─── РЕЖИМ УДАЛЕНИЯ (только плашка с датой) ──────────────
+function resetDateElement(el) {
+  el.dataset.confirming = "false";
+  el.textContent = el.dataset.original;
+  el.style.backgroundColor = "";
+  el.style.color = "";
+}
+
+function toggleDeleteMode(event, id) {
+  event.stopPropagation(); // не даём клику сразу же сброситься глобальным слушателем
+
+  const dateEl = document.getElementById(`date-${id}`);
+  if (!dateEl) return;
+
+  if (dateEl.dataset.confirming === "true") {
+    // Второй клик по красной плашке — удаляем запись
+    confirmDelete(id);
+    return;
+  }
+
+  // Сбрасываем другие открытые плашки, если такие были
+  document.querySelectorAll('.h-date[data-confirming="true"]').forEach(el => {
+    if (el !== dateEl) resetDateElement(el);
+  });
+
+  // Включаем режим подтверждения на этой плашке
+  dateEl.dataset.confirming = "true";
+  dateEl.textContent = "Delete?";
+  dateEl.style.backgroundColor = THEME.crimson;
+  dateEl.style.color = "#fff";
+}
+
+async function confirmDelete(id) {
+  const { error } = await supabaseClient
+    .from('peon')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    return alert('ERROR: ' + error.message);
+  }
+
+  loadHistory();
+}
+
+// ─── Клик куда угодно ещё — возврат плашки к дате ────────
+document.addEventListener('click', function (e) {
+  document.querySelectorAll('.h-date[data-confirming="true"]').forEach(el => {
+    if (el !== e.target) resetDateElement(el);
+  });
+});
 
 // ─── ГРАФИК ──────────────────────────────────────────────
 async function renderChart() {
