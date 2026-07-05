@@ -128,7 +128,7 @@ function toggleDeleteMode(event, id) {
 
   // Включаем режим подтверждения на этой плашке
   dateEl.dataset.confirming = "true";
-  dateEl.textContent = "Delete?";
+  dateEl.textContent = "Delete";
   dateEl.style.backgroundColor = THEME.crimson;
   dateEl.style.color = "#fff";
 }
