@@ -71,7 +71,6 @@ async function loadHistory() {
       day: 'numeric', month: 'short', year: 'numeric'
     });
     const inPocket = (item.net + item.bonus).toFixed(2);
-    const rate = item.hourly_rate.toFixed(2);
     const com = (item.com || 0).toFixed(2);
 
     return `
@@ -89,7 +88,7 @@ async function loadHistory() {
           <div>
             <div class="h-col-title">In Pocket</div>
             <div class="h-val" style="color:${THEME.crimson}">${inPocket}</div>
-            <div class="h-val" style="font-size:.75rem;color:${THEME.muted};font-weight:400">${rate} /h</div>
+            <div class="h-val" style="font-size:.75rem;color:${THEME.muted};font-weight:400">${item.hours} h</div>
           </div>
           <div>
             <div class="h-col-title">Cashbox</div>
@@ -157,7 +156,7 @@ document.addEventListener('click', function (e) {
 async function renderChart() {
   const { data } = await supabaseClient
     .from('peon')
-    .select('created_at, net, bonus')
+    .select('created_at, net, bonus, hourly_rate')
     .order('id', { ascending: false })
     .limit(10);
 
@@ -178,7 +177,8 @@ async function renderChart() {
           borderColor: THEME.crimson,
           borderWidth: 2,
           pointRadius: 0,
-          tension: 0.4
+          tension: 0.4,
+          yAxisID: 'y'
         },
         {
           label: 'Tips',
@@ -186,7 +186,17 @@ async function renderChart() {
           borderColor: THEME.blue,
           borderWidth: 2,
           pointRadius: 0,
-          tension: 0.4
+          tension: 0.4,
+          yAxisID: 'y'
+        },
+        {
+          label: 'Taux/h',
+          data: rev.map(d => d.hourly_rate),
+          borderColor: '#b08d3c',
+          borderWidth: 2.5,
+          pointRadius: 0,
+          tension: 0.4,
+          yAxisID: 'y1'
         }
       ]
     },
@@ -195,7 +205,8 @@ async function renderChart() {
       maintainAspectRatio: false,
       scales: {
         x: { display: false },
-        y: { display: false, beginAtZero: true }
+        y: { display: false, beginAtZero: true },
+        y1: { display: false, beginAtZero: true, position: 'right' }
       },
       plugins: { legend: { display: false } }
     }
