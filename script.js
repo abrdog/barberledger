@@ -62,7 +62,7 @@ async function loadHistory() {
     .from('peon')
     .select('*')
     .order('id', { ascending: false })
-    .limit(20);
+    .limit(50);
 
   if (error || !data) return;
 
